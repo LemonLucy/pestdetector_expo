@@ -52,16 +52,22 @@ const ManageCrops: React.FC = () => {
   if (selectedCrop) {
     return (
       <View style={styles.bgcontainer}>
-        <View style={styles.container}>
-          <Text style={styles.title}>{selectedCrop.crop_information?.name} Information</Text>
-          <CropInfo crop={selectedCrop.crop_information} />
-          <PestInfo pest={selectedCrop.pest_information} />
-          <DiseaseInfo disease={selectedCrop.disease_information} />
-          <HealthStatus health={selectedCrop.crop_health_information} />
-          <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCrop(null)}>
-            <Text style={styles.buttonText}>Back</Text>
-          </TouchableOpacity>
-        </View>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.container}>
+            <Text style={styles.title}>{selectedCrop.crop_information?.name} Information</Text>
+
+              <View style={styles.infoContainer}>
+                <CropInfo crop={selectedCrop.crop_information} />
+                <PestInfo pest={selectedCrop.pest_information} />
+                <DiseaseInfo disease={selectedCrop.disease_information} />
+                <HealthStatus health={selectedCrop.crop_health_information} />
+              </View>
+
+            <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCrop(null)}>
+              <Text style={styles.buttonText}>Back</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -98,13 +104,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2E7D32', // Background with dark green
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center', 
   },
   container: {
     flexGrow: 1,
     padding: 20,
-    alignItems: 'center',
+    alignItems: 'center', // 왼쪽 정렬
+    justifyContent: 'flex-start', // 위에서부터 아래로 정렬
+    width: '100%', // 화면의 90% 크기로 고정
+    gap: 20, // 각 컴포넌트 간 간격
   },
+  infoContainer: {
+    width: '100%', // 상위 컨테이너에 맞춤
+    padding: 10, // 내부 여백
+    //backgroundColor: '#F5F5F5', // 약간의 배경색으로 시각적 구분
+    backgroundColor: '#A8D5BA',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2, // 안드로이드 그림자
+    marginBottom: 20, // Back 버튼과 간격
+  },
+  
   title: {
     fontSize: 24,
     fontWeight: 'bold',
