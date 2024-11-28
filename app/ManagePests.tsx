@@ -17,7 +17,7 @@ const ManagePests: React.FC = () => {
 
           // Filter crops affected by pests or diseases
           const filteredCrops = cropData.filter(
-            (crop: any) =>
+            (crop: any) =>  
               crop.pest_information?.pest_name !== 'None' ||
               crop.disease_information?.severity !== 'None'
           );

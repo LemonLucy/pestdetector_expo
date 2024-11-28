@@ -1,11 +1,21 @@
 // src/screens/LoginAndSignupScreen.tsx
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Pressable, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Pressable,
+  Alert,
+} from 'react-native';
 import axios from 'axios';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = "http://172.30.1.16:5000";
+const API_BASE_URL = 'http://192.168.219.226:5000';
+const FORM_WIDTH = 320; // 애니메이션 너비 상수
 
 const LoginAndSignupScreen: React.FC = () => {
   const [isLoginFocused, setIsLoginFocused] = useState(true);
@@ -15,9 +25,24 @@ const LoginAndSignupScreen: React.FC = () => {
   const translateX = useSharedValue(0);
   const router = useRouter();
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const isAuthenticated = await AsyncStorage.getItem('isAuthenticated');
+        if (isAuthenticated === 'true') {
+          router.push('/HomeScreen'); // 로그인 상태면 홈 화면으로 이동
+        }
+      } catch (error) {
+        console.error('Error checking auth state:', error);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   const toggleFocus = (focusOnLogin: boolean) => {
     setIsLoginFocused(focusOnLogin);
-    translateX.value = withTiming(focusOnLogin ? 0 : -320, { duration: 500 });
+    translateX.value = withTiming(focusOnLogin ? 0 : -FORM_WIDTH, { duration: 500 });
   };
 
   const handleSignUp = async () => {
@@ -30,14 +55,15 @@ const LoginAndSignupScreen: React.FC = () => {
         email,
         password,
       });
+
       Alert.alert('Sign Up Successful', `User created: ${response.data}`);
+
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        // axios 에러일 경우
         Alert.alert('Sign Up Error', error.response?.data?.error || 'An error occurred');
-      } else if (error instanceof Error) {
-        // 일반적인 에러 처리
-        Alert.alert('Sign Up Error', error.message);
       } else {
         Alert.alert('Sign Up Error', 'An unknown error occurred');
       }
@@ -50,14 +76,25 @@ const LoginAndSignupScreen: React.FC = () => {
         email,
         password,
       });
+
+      console.log('Login response:', response.data);
+
+      const { AccessToken } = response.data;
+
+      if (!AccessToken) {
+        throw new Error('Login response does not contain a token');
+      }
+
+      // AsyncStorage에 로그인 상태 및 토큰 저장
+      await AsyncStorage.setItem('isAuthenticated', 'true');
+      await AsyncStorage.setItem('userToken', AccessToken);
+
       Alert.alert('Login Successful');
-      console.log(response.data); // 로그인 후 토큰 등 데이터 활용
       router.push('/HomeScreen');
     } catch (error) {
+      console.error('Error during sign in:', error);
       if (axios.isAxiosError(error)) {
         Alert.alert('Login Error', error.response?.data?.error || 'An error occurred');
-      } else if (error instanceof Error) {
-        Alert.alert('Login Error', error.message);
       } else {
         Alert.alert('Login Error', 'An unknown error occurred');
       }
@@ -67,22 +104,20 @@ const LoginAndSignupScreen: React.FC = () => {
   const animatedLoginStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
     opacity: withTiming(isLoginFocused ? 1 : 0.5, { duration: 500 }),
-    zIndex: isLoginFocused ? 1 : 0,
   }));
 
   const animatedSignupStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value + 320 }],
+    transform: [{ translateX: translateX.value + FORM_WIDTH }],
     opacity: withTiming(isLoginFocused ? 0.5 : 1, { duration: 500 }),
-    zIndex: isLoginFocused ? 0 : 1,
   }));
 
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.formContainer, animatedLoginStyle]}>
         <Text style={styles.title}>Sign In</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="Email"  
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
           value={email}
           onChangeText={setEmail}
         />
@@ -94,10 +129,10 @@ const LoginAndSignupScreen: React.FC = () => {
           onChangeText={setPassword}
         />
         <Button title="Sign In" onPress={handleSignIn} color="#4CAF50" />
-        <Pressable onPress={() => {
-          toggleFocus(false);
-        }}>
-          <Text style={!isLoginFocused ? styles.activeButton : styles.inactiveButton}>Don't have an account? Sign Up</Text>
+        <Pressable onPress={() => toggleFocus(false)}>
+          <Text style={!isLoginFocused ? styles.activeButton : styles.inactiveButton}>
+            Don't have an account? Sign Up
+          </Text>
         </Pressable>
       </Animated.View>
 
@@ -125,7 +160,9 @@ const LoginAndSignupScreen: React.FC = () => {
         />
         <Button title="Sign Up" onPress={handleSignUp} color="#4CAF50" />
         <Pressable onPress={() => toggleFocus(true)}>
-          <Text style={isLoginFocused ? styles.activeButton : styles.inactiveButton}>Already have an account? Sign In</Text>
+          <Text style={isLoginFocused ? styles.activeButton : styles.inactiveButton}>
+            Already have an account? Sign In
+          </Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -138,7 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#e8f5 e9',
+    backgroundColor: '#E8F5E9',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -157,7 +194,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     position: 'absolute',
-    width: 320,
+    width: FORM_WIDTH,
     padding: 20,
     borderRadius: 10,
     backgroundColor: '#ffffff',
@@ -165,7 +202,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
-    borderColor: '#81C784',
+    borderColor: '#388E3C',
     borderWidth: 1,
   },
   title: {
@@ -180,7 +217,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     paddingHorizontal: 10,
-    backgroundColor: '#f1f8e9',
+    backgroundColor: '#F1F8E9',
   },
 });
 

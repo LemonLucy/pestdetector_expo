@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View,Image, Text, StyleSheet,Button, TouchableOpacity, ScrollView } from 'react-native';
 import CropInfo from '@/components/CropInfo/CropInfo';
 import PestInfo from '@/components/CropInfo/PestInfo';
 import DiseaseInfo from '@/components/CropInfo/DiseaseInfo';
@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ManageCrops: React.FC = () => {
   const [cropData, setCropData] = useState<any | null>(null);
   const [selectedCrop, setSelectedCrop] = useState<any | null>(null);
-  const API_BASE_URL = 'http://172.30.1.16:5000';
+  const API_BASE_URL = 'http://192.168.219.226:5000';
 
   useEffect(() => {
     const loadCropData = async () => {
@@ -39,6 +39,11 @@ const ManageCrops: React.FC = () => {
     loadCropData();
   }, []);
 
+  // `selectedCrop` 상태 변경 디버깅
+  useEffect(() => {
+    console.log('selectedCrop 상태 변경:', selectedCrop);
+  }, [selectedCrop]);
+
   if (!cropData) {
     return (
       <View style={styles.bgcontainer}>
@@ -52,22 +57,31 @@ const ManageCrops: React.FC = () => {
   if (selectedCrop) {
     return (
       <View style={styles.bgcontainer}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" pointerEvents="auto">
+          <View style={styles.container} pointerEvents="auto">
             <Text style={styles.title}>{selectedCrop.crop_information?.name} Information</Text>
 
-              <View style={styles.infoContainer}>
-                <CropInfo crop={selectedCrop.crop_information} />
-                <PestInfo pest={selectedCrop.pest_information} />
-                <DiseaseInfo disease={selectedCrop.disease_information} />
-                <HealthStatus health={selectedCrop.crop_health_information} />
-              </View>
-
-            <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCrop(null)}>
-              <Text style={styles.buttonText}>Back</Text>
-            </TouchableOpacity>
+            <View style={styles.infoContainer}>
+              <CropInfo crop={selectedCrop.crop_information} />
+              <PestInfo pest={selectedCrop.pest_information} />
+              <DiseaseInfo disease={selectedCrop.disease_information} />
+              <HealthStatus health={selectedCrop.crop_health_information} />
+              {/* 이미지 추가 */}
+              {selectedCrop.image_url && (
+                <Image
+                  source={{ uri: selectedCrop.image_url }}
+                  style={styles.cropImage}
+                />
+              )}
+            </View>
+            
           </View>
         </ScrollView>
+        <TouchableOpacity style={styles.backButton} onPress={() => {
+                console.log('Back button pressed');
+                setSelectedCrop(null)}}>
+                <Text style={styles.buttonText}>Back</Text>
+              </TouchableOpacity>
       </View>
     );
   }
@@ -78,7 +92,7 @@ const ManageCrops: React.FC = () => {
         <Text style={styles.title}>Current Managing Crops</Text>
         {cropData.map((crop: any, index: number) => {
           const isHealthy =
-            crop.crop_health_information?.overall_health === 'Good' &&
+            //crop.crop_health_information?.overall_health === 'Good' &&
             crop.pest_information?.pest_name === 'None' &&
             crop.disease_information?.severity === 'None';
 
@@ -105,10 +119,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E7D32', // Background with dark green
     justifyContent: 'center',
     alignItems: 'center', 
+    overflow: 'visible'
   },
   container: {
+    position: 'relative',
     flexGrow: 1,
-    padding: 20,
+    padding: 10,
     alignItems: 'center', // 왼쪽 정렬
     justifyContent: 'flex-start', // 위에서부터 아래로 정렬
     width: '100%', // 화면의 90% 크기로 고정
@@ -117,15 +133,16 @@ const styles = StyleSheet.create({
   infoContainer: {
     width: '100%', // 상위 컨테이너에 맞춤
     padding: 10, // 내부 여백
-    //backgroundColor: '#F5F5F5', // 약간의 배경색으로 시각적 구분
-    backgroundColor: '#A8D5BA',
+    backgroundColor: '#F5F5F5', // 약간의 배경색으로 시각적 구분
+    //backgroundColor: '#A8D5BA',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2, // 안드로이드 그림자
-    marginBottom: 20, // Back 버튼과 간격
+    elevation: 2, 
+    marginBottom: 70, 
+    zIndex: 1,
   },
   
   title: {
@@ -134,6 +151,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     color: '#FFFFFF',
+  },
+  cropImage: {
+    width: 250, 
+    height: 180, 
+    borderRadius: 10, 
+    marginBottom: 10, 
+    alignItems: 'center',
   },
   cropButton: {
     paddingVertical: 15,
@@ -148,13 +172,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   backButton: {
+    position: 'absolute',
+    width: '50%',
+    bottom: 20, // 하단에서 20px 위로 배치
+    alignSelf: 'center', // 버튼을 중앙에 정렬
     backgroundColor: 'red',
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 10,
-    marginTop: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    zIndex: 1000, // 다른 요소보다 위로
+    elevation: 10
   },
   buttonText: {
     color: '#FFFFFF',
