@@ -26,8 +26,11 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.row}>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Community</Text>
+          <TouchableOpacity 
+          style={styles.button}
+          onPress={() => {router.push('/RobotControl')
+          }}>
+            <Text style={styles.buttonText}>Robot Control</Text>
           </TouchableOpacity>
         </View>
       </View>

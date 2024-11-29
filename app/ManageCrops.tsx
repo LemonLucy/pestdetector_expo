@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ManageCrops: React.FC = () => {
   const [cropData, setCropData] = useState<any | null>(null);
   const [selectedCrop, setSelectedCrop] = useState<any | null>(null);
-  const API_BASE_URL = 'http://192.168.219.226:5000';
+  const API_BASE_URL = 'http://172.20.10.2:5000';
 
   useEffect(() => {
     const loadCropData = async () => {
