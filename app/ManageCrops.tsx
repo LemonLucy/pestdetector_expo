@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View,Image, Text, StyleSheet,Button, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Image, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import CropInfo from '@/components/CropInfo/CropInfo';
 import PestInfo from '@/components/CropInfo/PestInfo';
 import DiseaseInfo from '@/components/CropInfo/DiseaseInfo';
@@ -7,107 +7,145 @@ import HealthStatus from '@/components/CropInfo/HealthStatus';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ManageCrops: React.FC = () => {
-  const [cropData, setCropData] = useState<any | null>(null);
-  const [selectedCrop, setSelectedCrop] = useState<any | null>(null);
-  const API_BASE_URL = 'http://172.20.10.2:5000';
+  const [cropData, setCropData] = useState<any[]>([]);
+  const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
+  const [selectedTimestamp, setSelectedTimestamp] = useState<string | null>(null);
 
+  const API_BASE_URL = 'http://192.168.1.34:5000';
+
+  const CROP_ID_MAP = {
+    strawberry: "1",
+    lettuce: "2",
+    onion: "3",
+    corn: "4",
+  };
+
+  const BUTTON_IMAGES = [
+    { id: "1", image: require("../assets/images/strawberry.jpg") },
+    { id: "2", image: require("../assets/images/lettuce.jpg") },
+    { id: "3", image: require("../assets/images/onions.jpg") },
+    { id: "4", image: require("../assets/images/cornbg.jpg") },
+    { id: "5", image: require("../assets/images/mandarin.jpg") },
+    { id: "6", image: require("../assets/images/cucum.jpg") },
+  ];
+  
+  // Group data by crop_id and timestamp
+  const groupByCropAndTimestamp = (data: any[]) => {
+    const grouped: { [cropId: string]: { [timestamp: string]: any } } = {};
+
+    data.forEach(item => {
+      const cropId = item.crop_id;
+      const timestamp = item.timestamp;
+
+      if (!grouped[cropId]) grouped[cropId] = {};
+      grouped[cropId][timestamp] = item;
+    });
+
+    return grouped;
+  };
+
+  // Load crop data
   useEffect(() => {
     const loadCropData = async () => {
       try {
-        // const storedData = await AsyncStorage.getItem('cropData');
-        // if (storedData) {
-        //   setCropData(JSON.parse(storedData));
-        //   console.log('로컬 스토리지에서 가져온 데이터:', JSON.parse(storedData));
-        //   return;
-        // }
-
         const response = await fetch(`${API_BASE_URL}/fetch/crop-data`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch crop data from server');
-        }
+        if (!response.ok) throw new Error('Failed to fetch crop data');
 
         const jsonData = await response.json();
         setCropData(jsonData);
-
-        await AsyncStorage.setItem('cropData', JSON.stringify(jsonData));
-        console.log('서버에서 가져온 데이터:', jsonData);
       } catch (error) {
-        console.error('로컬 스토리지에서 데이터를 가져오는 중 오류 발생:', error);
+        console.error('Error fetching crop data:', error);
       }
     };
 
     loadCropData();
   }, []);
 
-  // `selectedCrop` 상태 변경 디버깅
-  useEffect(() => {
-    console.log('selectedCrop 상태 변경:', selectedCrop);
-  }, [selectedCrop]);
-
-  if (!cropData) {
+  if (!cropData.length) {
     return (
       <View style={styles.bgcontainer}>
-        <View style={styles.container}>
-          <Text style={styles.title}>Loading...</Text>
-        </View>
+        <Text style={styles.title}>Loading...</Text>
       </View>
     );
   }
 
-  if (selectedCrop) {
+  const groupedData = groupByCropAndTimestamp(cropData);
+
+  // Render timestamp options for a selected crop
+  if (selectedCrop && !selectedTimestamp) {
+    const timestamps = Object.keys(groupedData[selectedCrop]);
+
     return (
       <View style={styles.bgcontainer}>
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" pointerEvents="auto">
-          <View style={styles.container} pointerEvents="auto">
-            <Text style={styles.title}>{selectedCrop.crop_information?.name} Information</Text>
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>Select a Timestamp</Text>
+          {timestamps.map((timestamp, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.cropButton}
+              onPress={() => setSelectedTimestamp(timestamp)}
+            >
+              <Text style={styles.buttonText}>{new Date(timestamp).toLocaleString()}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => setSelectedCrop(null)}
+        >
+          <Text style={styles.buttonText}>Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
-            <View style={styles.infoContainer}>
-              <CropInfo crop={selectedCrop.crop_information} />
-              <PestInfo pest={selectedCrop.pest_information} />
-              <DiseaseInfo disease={selectedCrop.disease_information} />
-              <HealthStatus health={selectedCrop.crop_health_information} />
-              {/* 이미지 추가 */}
-              {selectedCrop.image_url && (
-                <Image
-                  source={{ uri: selectedCrop.image_url }}
-                  style={styles.cropImage}
-                />
-              )}
-            </View>
-            
+  // Render details for a selected crop and timestamp
+  if (selectedCrop && selectedTimestamp) {
+    const detailedData  = groupedData[selectedCrop][selectedTimestamp];
+
+    return (
+      <View style={styles.bgcontainer}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>{selectedCrop} Details</Text>
+          <View style={styles.infoContainer}>
+            <CropInfo crop={detailedData.crop_information} />
+            <PestInfo pest={detailedData.pest_information} />
+            <DiseaseInfo disease={detailedData.disease_information} />
+            <HealthStatus health={detailedData.crop_health_information} />
+            {detailedData.image_url && (
+              <Image
+                source={{ uri: detailedData.image_url }}
+                style={styles.cropImage}
+              />
+            )}
           </View>
         </ScrollView>
-        <TouchableOpacity style={styles.backButton} onPress={() => {
-                console.log('Back button pressed');
-                setSelectedCrop(null)}}>
-                <Text style={styles.buttonText}>Back</Text>
-              </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => setSelectedTimestamp(null)}
+        >
+          <Text style={styles.buttonText}>Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
+  // Render crop buttons
   return (
     <View style={styles.bgcontainer}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Current Managing Crops</Text>
-        {cropData.map((crop: any, index: number) => {
-          const isHealthy =
-            //crop.crop_health_information?.overall_health === 'Good' &&
-            crop.pest_information?.pest_name === 'None' &&
-            crop.disease_information?.severity === 'None';
-
-          return (
-            <TouchableOpacity
-              key={index}
-              style={[styles.cropButton, { backgroundColor: isHealthy ? '#4CAF50' : '#FF0000' }]} // Green for healthy, red otherwise
-              onPress={() => setSelectedCrop(crop)}
-            >
-              <Text style={styles.buttonText}>
-                {crop.crop_information?.name || 'Unnamed Crop'}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        <Text style={styles.title}>Manage Crop</Text>
+          <View style={styles.cropRowContainer}>
+            {BUTTON_IMAGES.map((button) => (
+              <TouchableOpacity
+                key={button.id}
+                style={styles.cropImageButton}
+                onPress={() => setSelectedCrop(button.id)}
+              >
+                <Image source={button.image} style={styles.cropImageButtonImage} />
+              </TouchableOpacity>
+            ))}
+          </View>
       </ScrollView>
     </View>
   );
@@ -116,35 +154,53 @@ const ManageCrops: React.FC = () => {
 const styles = StyleSheet.create({
   bgcontainer: {
     flex: 1,
-    backgroundColor: '#2E7D32', // Background with dark green
+    backgroundColor: '#2E7D32',
     justifyContent: 'center',
-    alignItems: 'center', 
-    overflow: 'visible'
+    alignItems: 'center',
+    overflow: 'visible',
   },
   container: {
-    position: 'relative',
     flexGrow: 1,
     padding: 10,
-    alignItems: 'center', // 왼쪽 정렬
-    justifyContent: 'flex-start', // 위에서부터 아래로 정렬
-    width: '100%', // 화면의 90% 크기로 고정
-    gap: 20, // 각 컴포넌트 간 간격
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    width: '100%',
+    gap: 20,
+  },
+  cropRowContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  cropImageButton: {
+    margin: 10,
+    width: 140,
+    height: 140,
+    borderRadius: 10,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  cropImageButtonImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   infoContainer: {
-    width: '100%', // 상위 컨테이너에 맞춤
-    padding: 10, // 내부 여백
-    backgroundColor: '#F5F5F5', // 약간의 배경색으로 시각적 구분
-    //backgroundColor: '#A8D5BA',
+    width: '100%',
+    padding: 10,
+    backgroundColor: '#F5F5F5',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2, 
-    marginBottom: 70, 
+    elevation: 2,
+    marginBottom: 70,
     zIndex: 1,
   },
-  
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -153,11 +209,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   cropImage: {
-    width: 250, 
-    height: 180, 
-    borderRadius: 10, 
-    marginBottom: 10, 
-    alignItems: 'center',
+    width: 250,
+    height: 180,
+    borderRadius: 10,
+    marginBottom: 10,
   },
   cropButton: {
     paddingVertical: 15,
@@ -174,14 +229,14 @@ const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     width: '50%',
-    bottom: 20, // 하단에서 20px 위로 배치
-    alignSelf: 'center', // 버튼을 중앙에 정렬
+    bottom: 20,
+    alignSelf: 'center',
     backgroundColor: 'red',
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 10,
-    zIndex: 1000, // 다른 요소보다 위로
-    elevation: 10
+    zIndex: 1000,
+    elevation: 10,
   },
   buttonText: {
     color: '#FFFFFF',
