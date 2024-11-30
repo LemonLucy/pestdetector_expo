@@ -4,21 +4,40 @@ import CropInfo from '@/components/CropInfo/CropInfo';
 import PestInfo from '@/components/CropInfo/PestInfo';
 import DiseaseInfo from '@/components/CropInfo/DiseaseInfo';
 import HealthStatus from '@/components/CropInfo/HealthStatus';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+type CropData = {
+  crop_information: {
+    name: string;
+    species: string;
+    growth_stage: string;
+  };
+  pest_information: {
+    pest_name: string;
+    severity: string;
+    pesticide: string;
+  };
+  disease_information: {
+    disease_name: string;
+    symptoms: string;
+    severity: string;
+    pesticide: string;
+  };
+  crop_health_information: {
+    overall_health: string;
+    recommended_action: string;
+  };
+  timestamp: string;
+  crop_id: string;
+  image_url?: string; // Add image_url as optional if it might not always exist
+  healthColor?: string; // Optional property for health status color
+};
 
 const ManageCrops: React.FC = () => {
-  const [cropData, setCropData] = useState<any[]>([]);
+  const [cropData, setCropData] = useState<CropData[]>([]);
   const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
   const [selectedTimestamp, setSelectedTimestamp] = useState<string | null>(null);
 
   const API_BASE_URL = 'http://192.168.1.34:5000';
-
-  const CROP_ID_MAP = {
-    strawberry: "1",
-    lettuce: "2",
-    onion: "3",
-    corn: "4",
-  };
 
   const BUTTON_IMAGES = [
     { id: "1", image: require("../assets/images/strawberry.jpg") },
@@ -28,12 +47,33 @@ const ManageCrops: React.FC = () => {
     { id: "5", image: require("../assets/images/mandarin.jpg") },
     { id: "6", image: require("../assets/images/cucum.jpg") },
   ];
-  
-  // Group data by crop_id and timestamp
-  const groupByCropAndTimestamp = (data: any[]) => {
-    const grouped: { [cropId: string]: { [timestamp: string]: any } } = {};
 
-    data.forEach(item => {
+  // Function to determine health status
+  const determineHealthStatus = (data: CropData) => {
+    const pestSeverity = data.pest_information?.severity || "None";
+    const diseaseSeverity = data.disease_information?.severity || "None";
+    const overallHealth = data.crop_health_information?.overall_health || "Unknown";
+
+    let conditionsMet = 0;
+
+    if (pestSeverity === "None"|| pestSeverity === "N/A") conditionsMet += 1;
+    if (diseaseSeverity === "None"||diseaseSeverity === "N/A") conditionsMet += 1;
+    if (overallHealth === "Healthy") conditionsMet += 1;
+
+    if (conditionsMet === 3) {
+      return { status: "Healthy", color: "#4CAF50" }; // Green
+    } else if (conditionsMet === 2) {
+      return { status: "Moderate", color: "#FFEB3B" }; // Yellow
+    } else {
+      return { status: "Unhealthy", color: "#F44336" }; // Red
+    }
+  };
+
+  // Group data by crop_id and timestamp
+  const groupByCropAndTimestamp = (data: CropData[]) => {
+    const grouped: { [cropId: string]: { [timestamp: string]: CropData } } = {};
+
+    data.forEach((item) => {
       const cropId = item.crop_id;
       const timestamp = item.timestamp;
 
@@ -49,12 +89,17 @@ const ManageCrops: React.FC = () => {
     const loadCropData = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/fetch/crop-data`);
-        if (!response.ok) throw new Error('Failed to fetch crop data');
+        if (!response.ok) throw new Error("Failed to fetch crop data");
 
-        const jsonData = await response.json();
-        setCropData(jsonData);
+        const jsonData: CropData[] = await response.json();
+        const processedData = jsonData.map((item) => {
+          const healthInfo = determineHealthStatus(item);
+          return { ...item, healthColor: healthInfo.color };
+        });
+
+        setCropData(processedData);
       } catch (error) {
-        console.error('Error fetching crop data:', error);
+        console.error("Error fetching crop data:", error);
       }
     };
 
@@ -71,42 +116,18 @@ const ManageCrops: React.FC = () => {
 
   const groupedData = groupByCropAndTimestamp(cropData);
 
-  // Render timestamp options for a selected crop
-  if (selectedCrop && !selectedTimestamp) {
-    const timestamps = Object.keys(groupedData[selectedCrop]);
-
-    return (
-      <View style={styles.bgcontainer}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>Select a Timestamp</Text>
-          {timestamps.map((timestamp, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.cropButton}
-              onPress={() => setSelectedTimestamp(timestamp)}
-            >
-              <Text style={styles.buttonText}>{new Date(timestamp).toLocaleString()}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => setSelectedCrop(null)}
-        >
-          <Text style={styles.buttonText}>Back</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  // Render details for a selected crop and timestamp
   if (selectedCrop && selectedTimestamp) {
-    const detailedData  = groupedData[selectedCrop][selectedTimestamp];
-
+    const detailedData = groupedData[selectedCrop][selectedTimestamp];
+  
+    if (!detailedData) {
+      console.error("No data found for timestamp:", selectedTimestamp);
+      return null;
+    }
+  
     return (
       <View style={styles.bgcontainer}>
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>{selectedCrop} Details</Text>
+          <Text style={styles.title}>Crop Details</Text>
           <View style={styles.infoContainer}>
             <CropInfo crop={detailedData.crop_information} />
             <PestInfo pest={detailedData.pest_information} />
@@ -130,22 +151,70 @@ const ManageCrops: React.FC = () => {
     );
   }
 
+  // Render timestamp options for a selected crop
+  if (selectedCrop && !selectedTimestamp) {
+    const timestamps = Object.keys(groupedData[selectedCrop]).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
+    );
+    const totalCells = 35;
+    const calendarCells = Array.from({ length: totalCells }, (_, index) => timestamps[index] || null);
+
+    return (
+      <View style={styles.bgcontainer}>
+        <Text style={styles.title}>Crop Calendar</Text>
+        <View style={styles.calendarContainer}>
+          {calendarCells.map((timestamp, index) => {
+            const data = timestamp ? groupedData[selectedCrop][timestamp] : null;
+            const isUnhealthy =
+              data &&
+              (
+                (data.pest_information.pest_name !== "None" && data.pest_information.pest_name !== "N/A") ||
+                (data.disease_information.disease_name !== "None" && data.disease_information.disease_name !== "N/A")
+              );
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.calendarCell,
+                  { backgroundColor: timestamp ? data?.healthColor || "#E0E0E0" : "#E0E0E0" },
+                ]}
+                onPress={() => timestamp && setSelectedTimestamp(timestamp)}
+                disabled={!timestamp}
+              >
+                <Text style={styles.cellText}>
+                  {isUnhealthy ? (data?.pest_information.pest_name !== "N/A" && data?.pest_information.pest_name !== "None"
+                    ? data?.pest_information.pest_name
+                    : data?.disease_information.disease_name !== "N/A" && data?.disease_information.disease_name !== "None"
+                    ? data?.disease_information.disease_name
+                    : "") : ""}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCrop(null)}>
+          <Text style={styles.buttonText}>Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   // Render crop buttons
   return (
     <View style={styles.bgcontainer}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Manage Crop</Text>
-          <View style={styles.cropRowContainer}>
-            {BUTTON_IMAGES.map((button) => (
-              <TouchableOpacity
-                key={button.id}
-                style={styles.cropImageButton}
-                onPress={() => setSelectedCrop(button.id)}
-              >
-                <Image source={button.image} style={styles.cropImageButtonImage} />
-              </TouchableOpacity>
-            ))}
-          </View>
+        <View style={styles.cropRowContainer}>
+          {BUTTON_IMAGES.map((button) => (
+            <TouchableOpacity
+              key={button.id}
+              style={styles.cropImageButton}
+              onPress={() => setSelectedCrop(button.id)}
+            >
+              <Image source={button.image} style={styles.cropImageButtonImage} />
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
@@ -243,6 +312,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  calendarContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 10,
+  },
+  calendarCell: {
+    width: '20%', // 7 cells per row
+    height: 80,
+    aspectRatio: 1, // Keep cells square
+    marginBottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E0E0E0',
+    borderWidth: 1, // 캘린더 전체 테두리
+    borderColor: '#000', // 테두리 색상
+    //borderRadius: 8,
+  },
+  activeCell: {
+    backgroundColor: '#4CAF50',
+  },
+  cellText: {
+    fontSize: 14,
+    color: '#000',
+  },
+  timestampText: {
+    fontSize: 10,
+    color: '#FFF',
+  },
+  emptyCellText: {
+    color: '#CCC',
   },
 });
 
