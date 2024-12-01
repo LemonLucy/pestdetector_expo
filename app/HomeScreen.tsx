@@ -26,6 +26,12 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.row}>
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={() => {router.push('/CropAnalysis')
+          }}>
+            <Text style={styles.buttonText}>Robot Control</Text>
+          </TouchableOpacity>
           <TouchableOpacity 
           style={styles.button}
           onPress={() => {router.push('/RobotControl')
