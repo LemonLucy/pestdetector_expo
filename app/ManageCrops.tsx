@@ -37,7 +37,7 @@ const ManageCrops: React.FC = () => {
   const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
   const [selectedTimestamp, setSelectedTimestamp] = useState<string | null>(null);
 
-  const API_BASE_URL = 'http://192.168.1.34:5000';
+  const API_BASE_URL = 'http://172.30.1.16:5000';
 
   const BUTTON_IMAGES = [
     { id: "1", image: require("../assets/images/strawberry.jpg") },

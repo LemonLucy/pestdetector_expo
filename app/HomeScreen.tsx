@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageBackground, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { ImageBackground, View, Text,Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
@@ -7,7 +7,7 @@ export default function HomeScreen() {
 
   return (
     <ImageBackground
-      source={require('@/assets/images/robot_background.png')}
+      source={require('@/assets/images/bg.jpg')}
       style={styles.fullScreenBackground}
     >
       <View style={styles.container}>
@@ -16,13 +16,15 @@ export default function HomeScreen() {
             style={styles.button}
             onPress={() => router.push('/ManageCrops')}
           >
-            <Text style={styles.buttonText}>Manage Crops</Text>
+            <Image
+              source={require('@/assets/images/managebtn.jpg')}
+              style={styles.buttonImage}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.button}
             onPress={() => router.push('/ManagePests')}
           >
-            <Text style={styles.buttonText}>Pest Status</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.row}>
@@ -30,13 +32,19 @@ export default function HomeScreen() {
           style={styles.button}
           onPress={() => {router.push('/CropAnalysis')
           }}>
-            <Text style={styles.buttonText}>Crop Analysis</Text>
+            <Image
+              source={require('@/assets/images/analysisbtn.jpg')}
+              style={styles.buttonImage}
+            />
           </TouchableOpacity>
           <TouchableOpacity 
           style={styles.button}
           onPress={() => {router.push('/RobotControl')
           }}>
-            <Text style={styles.buttonText}>Robot Control</Text>
+            <Image
+              source={require('@/assets/images/robotbtn.jpg')}
+              style={styles.buttonImage}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -71,6 +79,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
+  },
+  buttonImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
+    //marginBottom: 10, // 텍스트와 이미지 간격
   },
   buttonText: {
     color: '#1B5E20',
