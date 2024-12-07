@@ -28,8 +28,16 @@ type CropData = {
   };
   timestamp: string;
   crop_id: string;
-  image_url?: string; // Add image_url as optional if it might not always exist
-  healthColor?: string; // Optional property for health status color
+  image_url?: string; 
+  healthColor?: string;
+  control_plan?: {
+    control_start_date: string;
+    control_interval: number;
+    control_duration: number;
+    control_method: string;
+    pesticide_dosage: string;
+    estimated_cost: number;
+  };
 };
 
 const ManageCrops: React.FC = () => {
@@ -37,7 +45,7 @@ const ManageCrops: React.FC = () => {
   const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
   const [selectedTimestamp, setSelectedTimestamp] = useState<string | null>(null);
 
-  const API_BASE_URL = 'http://172.30.1.16:5000';
+  const API_BASE_URL = 'http://192.168.1.22:5000';
 
   const BUTTON_IMAGES = [
     { id: "1", image: require("../assets/images/strawberry.jpg") },
@@ -161,7 +169,7 @@ const ManageCrops: React.FC = () => {
 
     return (
       <View style={styles.bgcontainer}>
-        <Text style={styles.title}>Crop Calendar</Text>
+        <Text style={styles.title}>Crop Status</Text>
         <View style={styles.calendarContainer}>
           {calendarCells.map((timestamp, index) => {
             const data = timestamp ? groupedData[selectedCrop][timestamp] : null;

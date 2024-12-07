@@ -11,7 +11,7 @@ import axios from "axios";
 
 const backgroundImage = require("@/assets/images/robot_background.png");
 
-const API_BASE_URL = "http://172.20.10.2:5000";
+const API_BASE_URL = "http://192.168.1.22:5000";
 
 const RobotControl: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string>("Ready to control the robot");
