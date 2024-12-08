@@ -20,11 +20,17 @@ export default function HomeScreen() {
               source={require('@/assets/images/managebtn.jpg')}
               style={styles.buttonImage}
             />
+            <Text style={styles.buttonText}>Crop Status</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.button}
             onPress={() => router.push('/ManagePests')}
           >
+            <Image
+              source={require('@/assets/images/calendar.jpg')}
+              style={styles.buttonImage}
+            />
+            <Text style={styles.buttonText}>Control Calendar</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.row}>
@@ -36,6 +42,7 @@ export default function HomeScreen() {
               source={require('@/assets/images/analysisbtn.jpg')}
               style={styles.buttonImage}
             />
+            <Text style={styles.buttonText}>Crop Analysis</Text>
           </TouchableOpacity>
           <TouchableOpacity 
           style={styles.button}
@@ -45,6 +52,7 @@ export default function HomeScreen() {
               source={require('@/assets/images/robotbtn.jpg')}
               style={styles.buttonImage}
             />
+            <Text style={styles.buttonText}>Robot Control</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -67,8 +75,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   button: {
-    width: 150,
-    height: 150,
+    width: 180,
+    height: 220,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.8)', // 버튼 배경 투명도 조절
     justifyContent: 'center',
@@ -79,12 +87,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
+    marginBottom: 40,
   },
   buttonImage: {
     width: '100%',
-    height: '100%',
+    height: '80%',
     borderRadius: 20,
-    //marginBottom: 10, // 텍스트와 이미지 간격
+    //marginBottom: 70, // 텍스트와 이미지 간격
   },
   buttonText: {
     color: '#1B5E20',

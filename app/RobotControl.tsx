@@ -9,9 +9,9 @@ import {
 } from "react-native";
 import axios from "axios";
 
-const backgroundImage = require("@/assets/images/robot_background.png");
+const backgroundImage = require("@/assets/images/bg6.jpg");
 
-const API_BASE_URL = "http://192.168.1.22:5000";
+const API_BASE_URL = "http://192.168.45.157:5000";
 
 const RobotControl: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string>("Ready to control the robot");
@@ -28,15 +28,17 @@ const RobotControl: React.FC = () => {
   };
 
   return (
-    <ImageBackground source={backgroundImage} style={styles.bgContainer}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>Robot Control Panel</Text>
-          <Text style={styles.statusMessage}>{statusMessage}</Text>
-        </View>
+    <View style={styles.container}>
+      {/* Top Section with Background Image */}
+      <View style={styles.imageContainer}>
+        <ImageBackground source={backgroundImage} style={styles.bgImage}>
+          
+        </ImageBackground>
+      </View>
 
-        {/* Robot Control Buttons */}
-        <View style={styles.controlPanel}>
+      {/* Bottom Section with Control Buttons */}
+      <View style={styles.controlContainer}>
+        <ScrollView contentContainerStyle={styles.controlPanel}>
           {/* North (Up) Button */}
           <TouchableOpacity
             style={styles.circularGreenButton}
@@ -47,9 +49,7 @@ const RobotControl: React.FC = () => {
 
           <View style={styles.middleRow}>
             {/* West (Left) Button */}
-            <TouchableOpacity
-              style={styles.circularGreenButton}
-            >
+            <TouchableOpacity style={styles.circularGreenButton}>
               <Text style={styles.buttonText}>←</Text>
             </TouchableOpacity>
 
@@ -62,9 +62,7 @@ const RobotControl: React.FC = () => {
             </TouchableOpacity>
 
             {/* East (Right) Button */}
-            <TouchableOpacity
-              style={styles.circularGreenButton}
-            >
+            <TouchableOpacity style={styles.circularGreenButton}>
               <Text style={styles.buttonText}>→</Text>
             </TouchableOpacity>
           </View>
@@ -84,61 +82,59 @@ const RobotControl: React.FC = () => {
           >
             <Text style={styles.buttonText}>Spray Pesticide</Text>
           </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </ImageBackground>
+        </ScrollView>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  bgContainer: {
+  container: {
     flex: 1,
-    backgroundColor: "#2E7D32",
+    //backgroundColor: "#2E7D32",
+  },
+  imageContainer: {
+    flex: 1.5,
+  },
+  bgImage: {
+    flex: 1,
     justifyContent: "center",
   },
-  container: {
-    flexGrow: 1,
-    alignItems: "center",
-    padding: 20,
-  },
   headerContainer: {
-    marginBottom: 20,
     alignItems: "center",
   },
   header: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: "bold",
-    color: "#FFFFFF",
-    textAlign: "center",
+    color:  "#FFFFFF",
+    //textAlign: "center",
   },
   statusMessage: {
-    fontSize: 16,
+    fontSize: 20,
     color: "#FFFFFF",
-    marginTop: 10,
+    marginTop: 5,
     textAlign: "center",
   },
+  controlContainer: {
+    flex: 1,
+    //backgroundColor: "#FFFFFF",
+    backgroundColor: "#2E7D32",
+    padding: 30,
+  },
   controlPanel: {
-    width: "100%",
     alignItems: "center",
-    marginTop: 100,
   },
   middleRow: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    width: "80%",
-    marginVertical: 20,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
     width: "100%",
-    marginBottom: 20,
+    marginVertical: 10,
   },
   circularGreenButton: {
     backgroundColor: "#6dbb63",
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 50,
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
@@ -146,7 +142,7 @@ const styles = StyleSheet.create({
   redButton: {
     backgroundColor: "red",
     width: 100,
-    height: 60,
+    height: 50,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
@@ -156,11 +152,11 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 10,
-    marginTop: 20,
+    marginTop: 30,
   },
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: "bold",
     textAlign: "center",
   },
